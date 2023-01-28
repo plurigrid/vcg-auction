@@ -1,4 +1,5 @@
-This represents a contract for a VCG (vickery-clark-groves) auction.
+This represents a contract for a "reverse" VCG (vickery-clark-groves) auction also known as a "second price auction". This means that a number of bidders will bid, and the 
+lowest bidder will win the auction. The winner will pay the second lowest bid.
 
 The contract runs one auction at a time. 
 

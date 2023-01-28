@@ -8,6 +8,25 @@ pub enum ContractError {
 
     #[error("Unauthorized")]
     Unauthorized {},
-    // Add any other custom errors you like here.
-    // Look at https://docs.rs/thiserror/1.0.21/thiserror/ for details.
+
+    #[error("Auction is in progress")]
+    AuctionAlreadyStarted {},
+
+    #[error("Auction not started")]
+    AuctionNotStarted {},
+
+    #[error("There must be at least 2 participants")]
+    TooFewParticipants {},
+
+    #[error("Bid amount must be greater than 0")]
+    BidAmountTooLow {},
+
+    #[error("Participant has already bid")]
+    ParticipantAlreadyBid {},
+
+    #[error("Not all bidders have cast their bids")]
+    NotAllBiddersHaveBid {},
+
+    #[error("No bids were found")]
+    NoBidsFound {},
 }

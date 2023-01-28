@@ -10,7 +10,6 @@ pub enum ExecuteMsg {
         /// The number of participants in the auction.
         /// Each participant may only bid once.
         number_of_participants: Uint128,
-        expiration: Timestamp,
     },
     /// Allows a participant to bid in the auction.
     ExecuteBid {
@@ -24,4 +23,7 @@ pub enum ExecuteMsg {
 
 #[cw_serde]
 #[derive(QueryResponses)]
-pub enum QueryMsg {}
+pub enum QueryMsg {
+    #[returns(cosmwasm_std::Addr)]
+    QueryFindWinner {},
+}
