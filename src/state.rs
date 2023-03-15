@@ -1,14 +1,17 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Timestamp, Uint128};
+use cosmwasm_std::{Addr, Storage, Timestamp, Uint128, Uint64};
 use cw_storage_plus::{Item, Map};
+
+use crate::ContractError;
 
 #[cw_serde]
 pub struct Auction {
     pub id: u64,
+    pub name: String,
     pub in_progress: bool,
-    pub max_participants: Uint128,
+    pub max_participants: Uint64,
     pub sorted_bids: Vec<Bid>,
-    pub winning_bid: Option<Bid>,
+    pub winner: Option<Winner>,
 }
 
 #[cw_serde]
@@ -19,21 +22,29 @@ pub struct Bid {
     pub timestamp: Timestamp,
 }
 
-pub const AUCTIONS: Map<&u64, Auction> = Map::new("auctions");
+#[cw_serde]
+pub struct Winner {
+    pub auction_id: u64,
+    pub amount_owed: Uint128,
+    pub bidder: Addr,
+}
 
-pub const CURRENT_AUCTION_ID: Item<&u64> = Item::new("current_auction_id");
+pub const AUCTIONS: Map<u64, Auction> = Map::new("auctions");
 
-pub const BIDDERS_TO_BIDS: Map<&Addr, Vec<Uint128>> = Map::new("bidders_to_bids");
+pub const CURRENT_AUCTION_ID: Item<u64> = Item::new("current_auction_id");
+
+pub const BIDDERS_TO_BIDS: Map<(&Addr, u64), Bid> = Map::new("bidders_to_bids");
 
 impl Auction {
     // O(1)
-    pub fn new(id: u64, max_participants: Uint128) -> Self {
+    pub fn new(id: u64, max_participants: Uint64, name: String) -> Self {
         Auction {
             id,
             in_progress: false,
             max_participants,
             sorted_bids: Vec::new(),
-            winning_bid: None,
+            winner: None,
+            name,
         }
     }
 
@@ -54,9 +65,11 @@ impl Auction {
 
     // O(log n) - average case
     // O(n) - worst case
-    pub fn add_bid(&mut self, bid: Bid) -> Result<(), &str> {
-        if self.sorted_bids.len() >= self.max_participants.u128() as usize {
-            return Err("Maximum number of participants reached");
+    pub fn add_bid(&mut self, storage: &mut dyn Storage, bid: Bid) -> Result<(), ContractError> {
+        if self.sorted_bids.len() >= self.max_participants.u64() as usize {
+            return Err(ContractError::MaxParticipantsReached {
+                max_participants: self.max_participants,
+            });
         }
         let index = match self
             .sorted_bids
@@ -66,6 +79,7 @@ impl Auction {
             Err(index) => index,
         };
         self.sorted_bids.insert(index, bid);
+        AUCTIONS.save(storage, self.id, &self)?;
         Ok(())
     }
 

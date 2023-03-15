@@ -1,4 +1,4 @@
-use cosmwasm_std::StdError;
+use cosmwasm_std::{StdError, Uint128, Uint64};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -9,11 +9,11 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
-    #[error("Auction is in progress")]
-    AuctionAlreadyStarted {},
+    #[error("There is already an auction in progress.")]
+    AuctionAlreadyInProgress {},
 
-    #[error("Auction not started")]
-    AuctionNotStarted {},
+    #[error("Auction is not in progress")]
+    AuctionNotInProgress {},
 
     #[error("There must be at least 2 participants")]
     TooFewParticipants {},
@@ -21,12 +21,18 @@ pub enum ContractError {
     #[error("Bid amount must be greater than 0")]
     BidAmountTooLow {},
 
-    #[error("Participant has already bid")]
-    ParticipantAlreadyBid {},
+    #[error("Participant has already placed a bid for this auction")]
+    BidAlreadyPlaced {},
 
     #[error("Not all bidders have cast their bids")]
     NotAllBiddersHaveBid {},
 
     #[error("No bids were found")]
     NoBidsFound {},
+
+    #[error("Max number of auction participants has already been reached")]
+    MaxParticipantsReached { max_participants: Uint64 },
+
+    #[error("Auction not found")]
+    AuctionNotFound { auction_id: u64 },
 }
