@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Timestamp, Uint128};
+use cosmwasm_std::Uint128;
 
 #[cw_serde]
 pub struct InstantiateMsg {}
@@ -26,4 +26,6 @@ pub enum ExecuteMsg {
 pub enum QueryMsg {
     #[returns(cosmwasm_std::Addr)]
     QueryFindWinner {},
+    #[returns(Vec<Uint128>)]
+    QueryGetBids { bidder: String },
 }

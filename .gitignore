@@ -15,7 +15,7 @@
 *.iml
 .idea
 
-# Haters
-
+# Misc
+artifacts/
 .cargo/
 .github/

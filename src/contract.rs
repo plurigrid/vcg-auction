@@ -2,17 +2,20 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
-    Timestamp, Uint128,
+    Uint128,
 };
 // use cw2::set_contract_version;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
-use crate::state::{Winner, AUCTION_IN_PROGRESS, BIDS_TO_BIDDERS, NUMBER_OF_PARTICIPANTS};
+use crate::state::{
+    Winner, AUCTION_IN_PROGRESS, BIDDERS_TO_BIDS, BIDS_TO_BIDDERS, CURRENT_AUCTION_ID,
+    NUMBER_OF_PARTICIPANTS,
+};
 
-// version info for migration info
-const CONTRACT_NAME: &str = "crates.io:vcg-auction";
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
+// version info for migration
+const _CONTRACT_NAME: &str = "crates.io:vcg-auction";
+const _CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -53,7 +56,7 @@ fn execute_bid(
 ) -> Result<Response, ContractError> {
     // Check auction is started
     if !AUCTION_IN_PROGRESS.may_load(deps.storage)?.unwrap_or(false) {
-        return Err(ContractError::AuctionAlreadyStarted {});
+        return Err(ContractError::AuctionNotStarted {});
     }
 
     // Check bid amount is valid
@@ -62,7 +65,7 @@ fn execute_bid(
     }
 
     // Check participant has not already bid
-    if BIDS_TO_BIDDERS
+    if BIDDERS_TO_BIDS
         .may_load(deps.storage, bid_amount.u128())?
         .is_some()
     {
@@ -76,21 +79,16 @@ fn execute_bid(
 
 fn execute_start_auction(
     deps: DepsMut,
-    number_of_participants: Uint128,
+    max_number_of_participants: Uint128,
 ) -> Result<Response, ContractError> {
     // Check auction is not already started
     if AUCTION_IN_PROGRESS.may_load(deps.storage)?.unwrap_or(false) {
         return Err(ContractError::AuctionAlreadyStarted {});
     }
 
-    // Check number of participants is at least 2
-    if number_of_participants < Uint128::from(2u128) {
+    // Check number of participants is valid
+    if max_number_of_participants < Uint128::from(2u128) {
         return Err(ContractError::TooFewParticipants {});
-    }
-
-    // Save number of participants
-    if !AUCTION_IN_PROGRESS.may_load(deps.storage)?.unwrap_or(false) {
-        return Err(ContractError::AuctionNotStarted {});
     }
 
     // Set auction in progress to true
@@ -121,12 +119,22 @@ fn execute_close_auction(deps: DepsMut) -> Result<Response, ContractError> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::QueryFindWinner {} => {
-            return query_find_winner(_deps);
+            return query_find_winner(deps);
         }
+        QueryMsg::QueryGetBids { bidder } => query_get_bids(deps, bidder),
     }
+}
+
+fn query_get_bids(deps: Deps, bidder: String) -> StdResult<Binary> {
+    let bidder = deps.api.addr_validate(&bidder)?;
+    let bids = BIDDERS_TO_BIDS
+        .load(deps.storage, &bidder)
+        .map_err(|e| StdError::generic_err("bidder not found"))?;
+
+    return Ok(to_binary(&bids)?);
 }
 
 fn query_find_winner(deps: Deps) -> StdResult<Binary> {
@@ -139,7 +147,6 @@ fn query_find_winner(deps: Deps) -> StdResult<Binary> {
 
     // We find the lowest bid and return the address of the participant who made that bid, as well as the
     // amount of the second-lowest bid, which is what the winner will pay.
-
     let mut keys_iter = BIDS_TO_BIDDERS.keys(deps.storage, None, None, Order::Ascending);
     let lowest_bid: u128 = keys_iter
         .next()
@@ -158,6 +165,14 @@ fn query_find_winner(deps: Deps) -> StdResult<Binary> {
     };
 
     return Ok(to_binary(&winner)?);
+}
+
+pub fn increment_auction_id(deps: DepsMut) -> StdResult<()> {
+    CURRENT_AUCTION_ID.update(deps.storage, |id| -> StdResult<_> {
+        let new_id = id + 1;
+        Ok(new_id)
+    })?;
+    Ok(())
 }
 
 #[cfg(test)]
