@@ -1,3 +1,4 @@
+use crate::state::{Bid, Winner};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Uint128, Uint64};
 
@@ -11,7 +12,7 @@ pub enum ExecuteMsg {
         name: String,
         /// The number of participants in the auction.
         /// Each participant may only bid once.
-        number_of_participants: Uint64,
+        max_num_participants: Uint64,
     },
     /// Allows a participant to bid in the auction.
     ExecuteBid {
@@ -27,17 +28,34 @@ pub enum ExecuteMsg {
 #[derive(QueryResponses)]
 pub enum QueryMsg {
     #[returns(cosmwasm_std::Addr)]
-    QueryGetWinner { auction_id: u64 },
+    QueryGetAuctionWinner { auction_id: Uint64 },
     #[returns(Vec<Uint128>)]
     QueryGetBidsForBidder {
         bidder: String,
         start_after: Option<Uint128>,
         limit: Option<u32>,
     },
-    #[returns(Vec<Uint128>)]
+    #[returns(Vec<Bid>)]
     QueryGetBidsForAuction {
-        auction_id: u64,
+        auction_id: Uint64,
         start_after: Option<Uint128>,
         limit: Option<u32>,
     },
+    #[returns(Uint64)]
+    QueryGetCurrentAuctionId {},
+}
+
+#[cw_serde]
+pub struct QueryCurrentAuctionIdResponse {
+    pub auction_id: Uint64,
+}
+
+#[cw_serde]
+pub struct QueryAuctionWinnerResponse {
+    pub winner: Winner,
+}
+
+#[cw_serde]
+pub struct QueryBidsForBidderResponse {
+    pub bids: Vec<Bid>,
 }

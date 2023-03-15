@@ -40,12 +40,14 @@ optimize = """docker run --rm -v "$(pwd)":/code \
 """
 
 [dependencies]
+anyhow = "1.0.69"
 cosmwasm-schema = "1.1.3"
 cosmwasm-std = "1.1.3"
 cosmwasm-storage = "1.1.3"
 cw-paginate = { git = "https://github.com/DA0-DA0/dao-contracts.git", branch = "main" }
 cw-storage-plus = "1.0.1"
 cw2 = "1.0.1"
+rand = "0.8.5"
 schemars = "0.8.10"
 serde = { version = "1.0.145", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
