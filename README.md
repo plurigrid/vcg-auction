@@ -9,8 +9,4 @@ Each auction is instantiated with a fixed number of bidders. Once the target num
 
 Authorizing bidders based on predetermined addresses will be a necessary but later feature of this contract.
 
-## Usage
 
-Generate schema and typescript types:
-
-```bash
