@@ -1,0 +1,8 @@
+[package]
+name = "vcg-auction-frontend"
+version = "0.1.0"
+authors = ["sx328 <jannaraj@baffled.dev>"]
+edition = "2021"
+
+[dependencies]
+yew = { version="0.20", features=["csr"] }
