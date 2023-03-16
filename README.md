@@ -10,3 +10,10 @@ Each auction is instantiated with a fixed number of bidders. Once the target num
 Authorizing bidders based on predetermined addresses will be a necessary but later feature of this contract.
 
 
+# Usage
+Run frontend in the frontend directory:
+``` bash
+cd frontend 
+trunk serve
+```
+
